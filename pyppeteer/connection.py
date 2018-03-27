@@ -54,22 +54,14 @@ class Connection(EventEmitter):
                     resp = await self.connection.recv()
                     if resp:
                         self._on_message(resp)
-                except (websockets.ConnectionClosed, ConnectionResetError):
+                except websockets.ConnectionClosed:
                     logger.info('connection closed')
-                    break
-                except Exception:
-                    logger.warning('connection closed')
                     break
 
     async def _async_send(self, msg: str) -> None:
         while not self._connected:
             await asyncio.sleep(self._delay)
-        try:
-            await self.connection.send(msg)
-        except (websockets.ConnectionClosed, ConnectionResetError):
-            logger.info('connection closed')
-        except Exception:
-            logger.warning('connection closed')
+        await self.connection.send(msg)
 
     def send(self, method: str, params: dict = None) -> Awaitable:
         """Send message via the connection."""
@@ -128,15 +120,12 @@ class Connection(EventEmitter):
 
     async def _on_close(self) -> None:  # noqa: C901
         if self._closeCallback:
-            self._closeCallback()  # terminate browser process
+            self._closeCallback()
             self._closeCallback = None
 
         if not self._recv_fut.done():
             if hasattr(self, 'connection'):  # may not have connection
-                try:
-                    await self.connection.close()
-                except Exception:
-                    pass
+                await self.connection.close()
             self._recv_fut.cancel()
 
         for cb in self._callbacks.values():
