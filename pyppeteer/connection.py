@@ -57,6 +57,9 @@ class Connection(EventEmitter):
                 except (websockets.ConnectionClosed, ConnectionResetError):
                     logger.info('connection closed')
                     break
+                except Exception:
+                    logger.warning('connection closed')
+                    break
 
     async def _async_send(self, msg: str) -> None:
         while not self._connected:
@@ -65,6 +68,8 @@ class Connection(EventEmitter):
             await self.connection.send(msg)
         except (websockets.ConnectionClosed, ConnectionResetError):
             logger.info('connection closed')
+        except Exception:
+            logger.warning('connection closed')
 
     def send(self, method: str, params: dict = None) -> Awaitable:
         """Send message via the connection."""
@@ -130,7 +135,7 @@ class Connection(EventEmitter):
             if hasattr(self, 'connection'):  # may not have connection
                 try:
                     await self.connection.close()
-                except (websockets.ConnectionClosed, ConnectionResetError):
+                except Exception:
                     pass
             self._recv_fut.cancel()
         for cb in self._callbacks.values():
