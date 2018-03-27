@@ -118,15 +118,10 @@ class Connection(EventEmitter):
         else:
             self._on_query(msg)
 
-    async def _on_close(self) -> None:  # noqa: C901
+    def _on_close(self) -> None:
         if self._closeCallback:
             self._closeCallback()
             self._closeCallback = None
-
-        if not self._recv_fut.done():
-            if hasattr(self, 'connection'):  # may not have connection
-                await self.connection.close()
-            self._recv_fut.cancel()
 
         for cb in self._callbacks.values():
             cb.cancel()
@@ -138,8 +133,11 @@ class Connection(EventEmitter):
 
     async def dispose(self) -> None:
         """Close all connection."""
+        self._on_close()
+
         self._connected = False
-        await self._on_close()
+        if hasattr(self, 'connection'):  # may not have connection
+            await self.connection.close()
 
     async def createSession(self, targetId: str) -> 'CDPSession':
         """Create new session."""
