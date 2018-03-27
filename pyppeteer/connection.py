@@ -127,6 +127,10 @@ class Connection(EventEmitter):
             self._on_query(msg)
 
     async def _on_close(self) -> None:  # noqa: C901
+        if self._closeCallback:
+            self._closeCallback()  # terminate browser process
+            self._closeCallback = None
+
         if not self._recv_fut.done():
             if hasattr(self, 'connection'):  # may not have connection
                 try:
@@ -142,10 +146,6 @@ class Connection(EventEmitter):
         for session in self._sessions.values():
             session._on_closed()
         self._sessions.clear()
-
-        if self._closeCallback:
-            self._closeCallback()  # terminate browser process
-            self._closeCallback = None
 
     async def dispose(self) -> None:
         """Close all connection."""

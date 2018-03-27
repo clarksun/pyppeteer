@@ -153,6 +153,7 @@ class Browser(EventEmitter):
     async def close(self) -> None:
         """Close connections and terminate browser process."""
         await self.disconnect()
+        await asyncio.sleep(1)
         await self._closeCallback()
 
     async def disconnect(self) -> None:
