@@ -121,14 +121,17 @@ class Connection(EventEmitter):
         else:
             self._on_query(msg)
 
-    async def _on_close(self) -> None:
+    async def _on_close(self) -> None:  # noqa: C901
         if self._closeCallback:
             self._closeCallback()
             self._closeCallback = None
 
         if not self._recv_fut.done():
             if hasattr(self, 'connection'):  # may not have connection
-                await self.connection.close()
+                try:
+                    await self.connection.close()
+                except (websockets.ConnectionClosed, ConnectionResetError):
+                    pass
             self._recv_fut.cancel()
         for cb in self._callbacks.values():
             cb.cancel()
