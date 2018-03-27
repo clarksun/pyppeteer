@@ -182,11 +182,8 @@ class Launcher(object):
         """Terminate chrome."""
         if self.proc.poll() is None and not self.chromeClosed:
             self.chromeClosed = True
-            try:
-                self.proc.terminate()
-                self.proc.wait()
-            except Exception:
-                pass
+            self.proc.terminate()
+            self.proc.wait()
             self._cleanup_tmp_user_data_dir()
 
     async def killChrome(self) -> None:
