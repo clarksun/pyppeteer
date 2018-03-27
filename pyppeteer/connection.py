@@ -61,7 +61,10 @@ class Connection(EventEmitter):
     async def _async_send(self, msg: str) -> None:
         while not self._connected:
             await asyncio.sleep(self._delay)
-        await self.connection.send(msg)
+        try:
+            await self.connection.send(msg)
+        except (websockets.ConnectionClosed, ConnectionResetError):
+            logger.info('connection closed')
 
     def send(self, method: str, params: dict = None) -> Awaitable:
         """Send message via the connection."""
